@@ -33,35 +33,35 @@ if [[ $1 == -base ]]; then
     shift
 fi
 
-color_base=""
-color_info=""
-color_status=""
-color_error=""
-color_normal=""
+COLOUR_BASE=""
+COLOUR_INFO=""
+COLOUR_STATUS=""
+COLOUR_ERROR=""
+COLOUR_NORMAL=""
 
 if test -t 1; then
-    ncolors=$(tput colors)
-    if test -n "$ncolors" && test $ncolors -ge 8; then
-        color_base="\033[0;36m"
-        color_info="\033[0;33m"
-        color_status="\033[0;32m"
-        color_error="\033[0;31m"
-        color_normal="\033[0m"
+    NCOLOURS=$(tput colors)
+    if test -n "${NCOLOURS}" && test ${NCOLOURS} -ge 8; then
+        COLOUR_BASE="\033[0;36m"
+        COLOUR_INFO="\033[0;33m"
+        COLOUR_STATUS="\033[0;32m"
+        COLOUR_ERROR="\033[0;31m"
+        COLOUR_NORMAL="\033[0m"
     fi
 fi
 
 # Provide custom colours
 msg_base() {
-    echo -e "$color_base$1$color_normal"
+    echo -e "${COLOUR_BASE}${1}${COLOUR_NORMAL}"
 }
 msg_info() {
-    echo -e "$color_info$1$color_normal"
+    echo -e "${COLOUR_INFO}${1}${COLOUR_NORMAL}"
 }
 msg_status() {
-    echo -e "$color_status$1$color_normal"
+    echo -e "${COLOUR_STATUS}${1}${COLOUR_NORMAL}"
 }
 msg_error() {
-    echo -e "$color_error$1$color_normal"
+    echo -e "${COLOUR_ERROR}${1}${COLOUR_NORMAL}"
 }
 
 ## ERROR HANDLER ##
