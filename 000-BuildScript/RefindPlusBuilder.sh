@@ -11,12 +11,25 @@
 # Parse parameters, setup colors if terminal
 BUILD_REL=1
 BUILD_DBG=1
-if [[ $1 == -dbg ]]; then
-    BUILD_REL=0
+BASETOOLS=0
+
+if [[ $1 == -dbg || $1 == -rel || $1 == -base ]]; then
+	BUILD_REL=0
+	BUILD_DBG=0
+fi
+
+if [[ $1 == -rel ]]; then
+    BUILD_REL=1
     shift
 fi
-if [[ $1 == -rel ]]; then
-    BUILD_DBG=0
+
+if [[ $1 == -dbg ]]; then
+    BUILD_DBG=1
+    shift
+fi
+
+if [[ $1 == -base ]]; then
+    BASETOOLS=1
     shift
 fi
 
@@ -88,19 +101,18 @@ GLOBAL_FILE_TMP_DBG="${EDK2_DIR}/RefindPlusPkg/BootMaster/globalExtra-DBG.txt"
 BUILD_DSC="${EDK2_DIR}/RefindPlusPkg/RefindPlusPkg.dsc"
 BUILD_DSC_REL="${EDK2_DIR}/RefindPlusPkg/RefindPlusPkg-REL.dsc"
 BUILD_DSC_DBG="${EDK2_DIR}/RefindPlusPkg/RefindPlusPkg-DBG.dsc"
-BASETOOLS='true'
-if [ -d "${EDK2_DIR}/BaseTools/Source/C/bin" ] ; then
-    BASETOOLS='false'
+if [ ! -d "${EDK2_DIR}/BaseTools/Source/C/bin" ] ; then
+    BASETOOLS=1
 fi
 
 msg_base 'Update RefindPlusPkg...'
-if [ ! -L "${EDK2_DIR}/RefindPlusPkg" ]; then
+if [[ ! -L "${EDK2_DIR}/RefindPlusPkg" || ! -d "${EDK2_DIR}/RefindPlusPkg" ]]; then
 	rm -fr "${EDK2_DIR}/RefindPlusPkg"
     ln -s "${WORK_DIR}" "${EDK2_DIR}/RefindPlusPkg"
 fi
 msg_status '...OK'; echo ''
 
-if [ "${BASETOOLS}" == 'true' ] ; then
+if (( BASETOOLS )) ; then
     pushd "${EDK2_DIR}/BaseTools/Source/C" > /dev/null || exit 1
     msg_base 'Make Clean...'
     make clean
