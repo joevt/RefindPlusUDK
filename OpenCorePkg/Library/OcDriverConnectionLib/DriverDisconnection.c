@@ -20,6 +20,15 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Library/OcDriverConnectionLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 
+
+#if REFIT_DEBUG > 0
+VOID LEAKABLEEXTERNALSTART (const CHAR8 *description);
+VOID LEAKABLEEXTERNALSTOP ();
+#else
+#define LEAKABLEEXTERNALSTART(...)
+#define LEAKABLEEXTERNALSTOP(...)
+#endif
+
 EFI_STATUS
 OcDisconnectDriversOnHandle (
   IN EFI_HANDLE  Controller
@@ -46,11 +55,13 @@ OcDisconnectDriversOnHandle (
 
   for (BlockIoInfoIndex = 0; BlockIoInfoIndex < NumBlockIoInfo; ++BlockIoInfoIndex) {
     if ((BlockIoInfos[BlockIoInfoIndex].Attributes & EFI_OPEN_PROTOCOL_BY_DRIVER) != 0) {
+      LEAKABLEEXTERNALSTART("OcDisconnectDriversOnHandle DisconnectController");
       Status = gBS->DisconnectController (
         Controller,
         BlockIoInfos[BlockIoInfoIndex].AgentHandle,
         NULL
         );
+      LEAKABLEEXTERNALSTOP();
       if (EFI_ERROR (Status)) {
         DEBUG ((
           DEBUG_INFO,
