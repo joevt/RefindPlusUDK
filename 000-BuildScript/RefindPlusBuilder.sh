@@ -11,7 +11,7 @@
 # Parse parameters, setup colors if terminal
 BUILD_REL=1
 BUILD_DBG=1
-BASETOOLS=0
+BUILD_TOOLS=0
 DO_CHECKOUT=1
 EDIT_BRANCH="-GOPFix"
 DO_SLEEP=1
@@ -27,7 +27,7 @@ while (( $# )); do
     case "${1}" in
         -rel) BUILD_REL=1 ;;
         -dbg) BUILD_DBG=1 ;;
-        -base) BASETOOLS=1 ;;
+        -base) BUILD_TOOLS=1 ;;
         *) DO_CHECKOUT=1 ; EDIT_BRANCH="$1" ;;
     esac
     shift
@@ -102,9 +102,33 @@ GLOBAL_FILE_TMP_DBG="${EDK2_DIR}/RefindPlusPkg/BootMaster/globalExtra-DBG.txt"
 BUILD_DSC="${EDK2_DIR}/RefindPlusPkg/RefindPlusPkg.dsc"
 BUILD_DSC_REL="${EDK2_DIR}/RefindPlusPkg/RefindPlusPkg-REL.dsc"
 BUILD_DSC_DBG="${EDK2_DIR}/RefindPlusPkg/RefindPlusPkg-DBG.dsc"
+SHASUM='/usr/bin/shasum'
+DUP_SHASUM='/usr/local/bin/shasum'
+TMP_SHASUM='/usr/local/bin/_shasum'
 
-if [ ! -d "${EDK2_DIR}/BaseTools/Source/C/bin" ] ; then
-    BASETOOLS=1
+BASETOOLS_SHA_FILE="${EDK2_DIR}/000-BuildScript/BaseToolsSHA.txt"
+if [ ! -f "${BASETOOLS_SHA_FILE}" ] ; then
+    BASETOOLS_SHA_OLD='Default'
+else
+    # shellcheck disable=SC1090
+    source "${BASETOOLS_SHA_FILE}" || BASETOOLS_SHA_OLD='Default'
+fi
+if [ -f "${DUP_SHASUM}" ] ; then
+    mv "${DUP_SHASUM}" "${TMP_SHASUM}"
+    SHASUM_FIX='true'
+else
+    SHASUM_FIX='false'
+fi
+
+pushd "${EDK2_DIR}/BaseTools" > /dev/null || exit 1
+BASETOOLS_SHA_NEW="$(find . -type f -name '*.c' -name '*.h' -name '*.py' -print0 | sort -z | xargs -0 ${SHASUM} | ${SHASUM})"
+popd > /dev/null || exit 1
+
+if [ "${SHASUM_FIX}" == 'true' ] ; then
+    mv "${TMP_SHASUM}" "${DUP_SHASUM}"
+fi
+if [ ! -d "${EDK2_DIR}/BaseTools/Source/C/bin" ] || [ "${BASETOOLS_SHA_NEW}" != "${BASETOOLS_SHA_OLD}" ] ; then
+    BUILD_TOOLS=1
 fi
 
 if (( DO_CHECKOUT )); then
@@ -124,7 +148,7 @@ if [[ ! -L "${EDK2_DIR}/RefindPlusPkg" || ! -d "${EDK2_DIR}/RefindPlusPkg" ]]; t
 fi
 msg_status '...OK'; echo
 
-if (( BASETOOLS )) ; then
+if (( BUILD_TOOLS )) ; then
     pushd "${EDK2_DIR}/BaseTools/Source/C" > /dev/null || exit 1
     msg_base 'Make Clean...'
     make clean
@@ -134,7 +158,9 @@ if (( BASETOOLS )) ; then
     pushd "${EDK2_DIR}" > /dev/null || exit 1
     msg_base 'Make BaseTools...'
     make -C BaseTools/Source/C
-    msg_status '...OK'; echo
+    echo '#!/usr/bin/env bash' > "${BASETOOLS_SHA_FILE}"
+    echo "BASETOOLS_SHA_OLD='${BASETOOLS_SHA_NEW}'" >> "${BASETOOLS_SHA_FILE}"
+    msg_status '...OK'; echo ''
     popd > /dev/null || exit 1
 fi
 
