@@ -266,12 +266,18 @@ DevPathToTextVendor (
     break;
   }
 
-  DataLength = DevicePathNodeLength (&Vendor->Header) - sizeof (VENDOR_DEVICE_PATH);
-  UefiDevicePathLibCatPrint (Str, L"Ven%s(%g", Type, &Vendor->Guid);
+  UefiDevicePathLibCatPrint (Str, L"Ven%s(", Type);
+  UINT8 *Data = (UINT8 *)&Vendor->Guid;
+  DataLength = DevicePathNodeLength (&Vendor->Header) - sizeof (Vendor->Header);
+  if (DataLength >= sizeof (Vendor->Guid)) {
+    UefiDevicePathLibCatPrint (Str, L"%g", &Vendor->Guid);
+    DataLength -= sizeof (Vendor->Guid);
+    Data += sizeof (Vendor->Guid);
+  }
   if (DataLength != 0) {
     UefiDevicePathLibCatPrint (Str, L",");
     for (Index = 0; Index < DataLength; Index++) {
-      UefiDevicePathLibCatPrint (Str, L"%02x", ((VENDOR_DEVICE_PATH_WITH_DATA *) Vendor)->VendorDefinedData[Index]);
+      UefiDevicePathLibCatPrint (Str, L"%02x", Data[Index]);
     }
   }
 
