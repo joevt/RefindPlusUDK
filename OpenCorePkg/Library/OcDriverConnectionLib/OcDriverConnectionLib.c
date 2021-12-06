@@ -17,6 +17,8 @@
 #include <Library/OcDriverConnectionLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Protocol/PlatformDriverOverride.h>
+#include <Protocol/PlatformDriverOverride.h>
+#include "../../../../Working/BootMaster/leaks.h"
 
 //
 // NULL-terminated list of driver handles that will be served by EFI_PLATFORM_DRIVER_OVERRIDE_PROTOCOL.
@@ -238,11 +240,13 @@ OcConnectDrivers (
       //
       // Retrieve the list of all the protocols on each handle
       //
+      LEAKABLEEXTERNALSTART("ProtocolsPerHandle");
       Status = gBS->ProtocolsPerHandle (
         HandleBuffer[HandleIndex],
         &ProtocolGuids,
         &ProtocolCount
         );
+      LEAKABLEEXTERNALSTOP("ProtocolsPerHandle");
 
       if (EFI_ERROR (Status)) {
         continue;
@@ -252,12 +256,14 @@ OcConnectDrivers (
         //
         // Retrieve the list of agents that have opened each protocol
         //
+        LEAKABLEEXTERNALSTART("OpenProtocolInformation");
         Status = gBS->OpenProtocolInformation (
           HandleBuffer[HandleIndex],
           ProtocolGuids[ProtocolIndex],
           &ProtocolInfos,
           &ProtocolInfoCount
           );
+        LEAKABLEEXTERNALSTOP("OpenProtocolInformation");
 
         if (!EFI_ERROR (Status)) {
           for (InfoIndex = 0; InfoIndex < ProtocolInfoCount && Connect; ++InfoIndex) {
