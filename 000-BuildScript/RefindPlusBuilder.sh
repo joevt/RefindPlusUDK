@@ -217,35 +217,68 @@ DoBuild () {
 }
 
 # Build release version
-if (( BUILD_REL )); then
-    # Build release version
-    DoBuild REL RELEASE "${GLOBAL_FILE_TMP_REL}" "${BUILD_DSC_REL}" "${XCODE_DIR_REL}"
-
-    if (( BUILD_DBG )); then
-        msg_info 'Preparing DBG Build...'
-        echo
-        if (( DO_SLEEP )); then
-            sleep 4
-        fi
-    fi
+clear
+msg_info '## RefindPlusBuilder - Building REL Version ##'
+msg_info '----------------------------------------------'
+pushd "${EDK2_DIR}" > /dev/null || exit 1
+if [ -d "${EDK2_DIR}/.Build-TMP" ] ; then
+    rm -fr "${EDK2_DIR}/.Build-TMP"
 fi
+if [ -f "${GLOBAL_FILE}" ] ; then
+    rm -fr "${GLOBAL_FILE}"
+fi
+cp "${GLOBAL_FILE_TMP_REL}" "${GLOBAL_FILE}"
+
+if [ -f "${BUILD_DSC}" ] ; then
+    rm -fr "${BUILD_DSC}"
+fi
+cp "${BUILD_DSC_REL}" "${BUILD_DSC}"
+
+source edksetup.sh BaseTools
+build -b RELEASE
+
+if [ -d "${EDK2_DIR}/Build" ] ; then
+    cp "${BINARY_DIR_REL}/RefindPlus.efi" "${OUTPUT_DIR}/BOOTx64-REL.efi"
+fi
+popd > /dev/null || exit 1
+echo ''
+msg_info "Completed REL Build on '${EDIT_BRANCH}' Branch of RefindPlus"
+msg_info 'Preparing DBG Build...'
+echo ''
+sleep 4
 
 
 # Build debug version
-if (( BUILD_DBG )); then
-    # Build debug version
-    DoBuild DBG DEBUG "${GLOBAL_FILE_TMP_DBG}" "${BUILD_DSC_DBG}" "${XCODE_DIR_DBG}"
+clear
+msg_info '## RefindPlusBuilder - Building DBG Version ##'
+msg_info '----------------------------------------------'
+pushd "${EDK2_DIR}" > /dev/null || exit 1
+if [ -f "${GLOBAL_FILE}" ] ; then
+    rm -fr "${GLOBAL_FILE}"
 fi
+cp "${GLOBAL_FILE_TMP_DBG}" "${GLOBAL_FILE}"
 
-
-# Copy debug and release versions even if we only built one of them or neither
-if [ -f "${BINARY_DIR_DBG}/RefindPlus.efi" ] ; then
-    cp -p "${BINARY_DIR_DBG}/RefindPlus.efi" "${OUTPUT_DIR}/BOOTx64-DBG.efi"
+if [ -f "${BUILD_DSC}" ] ; then
+    rm -fr "${BUILD_DSC}"
 fi
-if [ -f "${BINARY_DIR_REL}/RefindPlus.efi" ] ; then
-    cp -p "${BINARY_DIR_REL}/RefindPlus.efi" "${OUTPUT_DIR}/BOOTx64-REL.efi"
-fi
+cp "${BUILD_DSC_DBG}" "${BUILD_DSC}"
 
+source edksetup.sh BaseTools
+build -b DEBUG
+
+if [ -d "${EDK2_DIR}/Build" ] ; then
+    cp "${BINARY_DIR_DBG}/RefindPlus.efi" "${OUTPUT_DIR}/BOOTx64-DBG.efi"
+fi
+if [ -d "${EDK2_DIR}/.Build-TMP" ] ; then
+    rm -fr "${EDK2_DIR}/.Build-TMP"
+fi
+if [ -d "${EDK2_DIR}/Build" ] ; then
+    cp "${BINARY_DIR_REL}/RefindPlus.efi" "${OUTPUT_DIR}/BOOTx64-REL.efi"
+fi
+popd > /dev/null || exit 1
+echo ''
+msg_info "Completed DBG Build on '${EDIT_BRANCH}' Branch of RefindPlus"
+echo ''
 
 # Tidy up
 if [ -f "${GLOBAL_FILE}" ] ; then
