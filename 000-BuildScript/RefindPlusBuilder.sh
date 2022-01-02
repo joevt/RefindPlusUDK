@@ -96,12 +96,6 @@ XCODE_DIR_DBG="${EDK2_DIR}/Build/RefindPlus/DEBUG_XCODE5"
 BINARY_DIR_REL="${XCODE_DIR_REL}/X64"
 BINARY_DIR_DBG="${XCODE_DIR_DBG}/X64"
 OUTPUT_DIR="${EDK2_DIR}/000-BOOTx64-Files"
-GLOBAL_FILE="${EDK2_DIR}/RefindPlusPkg/BootMaster/globalExtra.h"
-GLOBAL_FILE_TMP_REL="${EDK2_DIR}/RefindPlusPkg/BootMaster/globalExtra-REL.txt"
-GLOBAL_FILE_TMP_DBG="${EDK2_DIR}/RefindPlusPkg/BootMaster/globalExtra-DBG.txt"
-BUILD_DSC="${EDK2_DIR}/RefindPlusPkg/RefindPlusPkg.dsc"
-BUILD_DSC_REL="${EDK2_DIR}/RefindPlusPkg/RefindPlusPkg-REL.dsc"
-BUILD_DSC_DBG="${EDK2_DIR}/RefindPlusPkg/RefindPlusPkg-DBG.dsc"
 SHASUM='/usr/bin/shasum'
 DUP_SHASUM='/usr/local/bin/shasum'
 TMP_SHASUM='/usr/local/bin/_shasum'
@@ -180,9 +174,7 @@ echo
 DoBuild () {
     local BUILD_TYPE="$1"
     local BUILD_OPTION="$2"
-    local GLOBAL_FILE_TMP="$3"
-    local BUILD_DSC_TMP="$4"
-    local XCODE_DIR="$5"
+    local XCODE_DIR="$3"
     
     clear 2> /dev/null || :
     msg_info "## RefindPlusBuilder - Building ${BUILD_TYPE} Version ##"
@@ -194,15 +186,6 @@ DoBuild () {
     if [ -d "${EDK2_DIR}/.Build-TMP" ] ; then
         rm -fr "${EDK2_DIR}/.Build-TMP"
     fi
-    if [ -f "${GLOBAL_FILE}" ] ; then
-        rm -fr "${GLOBAL_FILE}"
-    fi
-    cp -p "${GLOBAL_FILE_TMP}" "${GLOBAL_FILE}"
-
-    if [ -f "${BUILD_DSC}" ] ; then
-        rm -fr "${BUILD_DSC}"
-    fi
-    cp -p "${BUILD_DSC_TMP}" "${BUILD_DSC}"
 
     source edksetup.sh BaseTools
     build -b "${BUILD_OPTION}"
@@ -219,7 +202,7 @@ DoBuild () {
 # Build release version
 if (( BUILD_REL )); then
     # Build release version
-    DoBuild REL RELEASE "${GLOBAL_FILE_TMP_REL}" "${BUILD_DSC_REL}" "${XCODE_DIR_REL}"
+    DoBuild REL RELEASE "${XCODE_DIR_REL}"
 
     if (( BUILD_DBG )); then
         msg_info 'Preparing DBG Build...'
@@ -234,7 +217,7 @@ fi
 # Build debug version
 if (( BUILD_DBG )); then
     # Build debug version
-    DoBuild DBG DEBUG "${GLOBAL_FILE_TMP_DBG}" "${BUILD_DSC_DBG}" "${XCODE_DIR_DBG}"
+    DoBuild DBG DEBUG "${XCODE_DIR_DBG}"
 fi
 
 
@@ -248,14 +231,6 @@ fi
 
 
 # Tidy up
-if [ -f "${GLOBAL_FILE}" ] ; then
-    rm -fr "${GLOBAL_FILE}"
-fi
-cp -p "${GLOBAL_FILE_TMP_REL}" "${GLOBAL_FILE}"
-if [ -f "${BUILD_DSC}" ] ; then
-    rm -fr "${BUILD_DSC}"
-fi
-cp -p "${BUILD_DSC_REL}" "${BUILD_DSC}"
 echo
 msg_info 'Output EFI Files...'
 msg_status "RefindPlus EFI Files (BOOTx64)      : '${OUTPUT_DIR}'"
